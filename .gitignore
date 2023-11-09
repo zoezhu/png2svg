@@ -1,9 +1,9 @@
 svg_tmp
+png_tmp
 test_imgs
 check_bmp.py
 check_color.py
 test_dist.py
 test_sharpen.py
 sr_inference.py
-*.png
 *.bmp
