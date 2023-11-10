@@ -63,17 +63,27 @@ git clone https://github.com/zoezhu/png2svg.git
   pip3 install torch
   ```
 
+  Download model file.
+
+  ```shell
+  # Make sure under Real-ESRGAN folder
+  # RealESRGAN_x4plus_anime_6B.pth, good for anime style input
+  wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth -P weights
+  # RealESRGAN_x4plus.pth
+  wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P weights
+  ```
+
   
 
 ## Usage
 
 Input path can be a file or a folder.
 
-```python
-# Parameters
--f [--file], required=True, type=str, Input image folder or single image path.
--c [--color], type=int, default=-1, How many colors you want to draw.
--sr [--do_sr] Wheather do super resolution for input image.
+```text
+Usage: python get_svg.py
+-f   file       required=True, type=str, Input image folder or single image path.
+-c   color      type=int, default=-1, How many colors you want to draw.
+-sr  do_sr      Wheather do super resolution for input image.
 ```
 
 Run the script.
