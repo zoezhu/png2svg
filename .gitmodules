@@ -1,3 +1,6 @@
 [submodule "Real-ESRGAN"]
 	path = Real-ESRGAN
 	url = https://github.com/xinntao/Real-ESRGAN.git
+[submodule "pypotrace"]
+	path = pypotrace
+	url = https://github.com/flupke/pypotrace.git

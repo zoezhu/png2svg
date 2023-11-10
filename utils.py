@@ -21,7 +21,10 @@ try:
     import torch
 except:
     print("[WARNING] torch not import correctly!!! Make sure install it if you need to do sr!!!")
-from basicsr.archs.rrdbnet_arch import RRDBNet
+try:
+    from basicsr.archs.rrdbnet_arch import RRDBNet
+except:
+    print("[WARNING] basicsr not import correctly!!! Make sure install it if you need to do sr!!!")
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 

@@ -24,9 +24,9 @@ except:
 if __name__ == '__main__':
     # 获取参数
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--file', required=True, type=str, help="input image folder or single image path")
+    parser.add_argument('-f', '--file', required=True, type=str, help="Input image folder or single image path.")
     parser.add_argument("-c", '--color', help="How many colors you want to draw", type=int, default=-1)
-    parser.add_argument("-sr", '--do_sr', action='store_true', help="Wheather do super resolution for input image")
+    parser.add_argument("-sr", '--do_sr', action='store_true', help="Wheather do super resolution for input image.")
     args = parser.parse_args()
     
     if args.do_sr:

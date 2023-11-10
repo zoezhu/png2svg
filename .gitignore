@@ -8,3 +8,4 @@ test_dist.py
 test_sharpen.py
 sr_inference.py
 *.bmp
+*.svg
