@@ -6,6 +6,13 @@ Convert images from png/jpg format to svg.
 
 
 
+## Performance Compare
+
+In some cases our algorithm is more accurate in detailes compare to some popular repo.
+
+![Untitled](assets/compare_res.png)
+
+
 ## Install
 
 Clone repo.
