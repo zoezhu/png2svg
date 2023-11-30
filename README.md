@@ -4,6 +4,7 @@
 
 Convert images from png/jpg format to svg.
 
+Star is all I need, please star it if it's a little bit helpful for you :)
 
 
 ## Performance Compare
