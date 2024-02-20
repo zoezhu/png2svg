@@ -1,121 +1,95 @@
-# PNG2SVG
+"""
+main
 
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+@author zz
+@date 2023.11.9
+"""
 
-Convert images from png/jpg format to svg.
+import argparse
+from utils import *
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SVG_TEMP_FOLDER = os.path.join(BASE_DIR, "svg_tmp")
+if not os.path.exists(SVG_TEMP_FOLDER):
+    os.makedirs(SVG_TEMP_FOLDER)
+SR_MODEL_PATH = os.path.join(BASE_DIR, 'Real-ESRGAN/weights/RealESRGAN_x4plus_anime_6B.pth')  # 'Real-ESRGAN/weights/RealESRGAN_x4plus_anime_6B.pth'
 
-
-## Install
-
-Clone repo.
-
-```shell
-# Use whole functions with sr, highly recommand
-git clone --recursive https://github.com/zoezhu/png2svg.git
-
-# OR
-# Do not use sr, no need to install torch and Real-ESRGAN, with performance degradation
-git clone https://github.com/zoezhu/png2svg.git
-```
-
-
-
-- Regular library
-
-  ```shell
-  pip install -r requirements.txt
-  ```
-
-- Potrace
-
-  Ubuntu:
-
-  ```shell
-  # install system dependencies
-  sudo apt-get install build-essential python-dev libagg-dev libpotrace-dev pkg-config
-  
-  # Install pypotrace
-  cd pypotrace
-  pip install numpy
-  pip install .
-  cd ..
-  ```
-
-  CentOS/OSX/Windows install steps can be found in [Potrace](https://pypi.org/project/pypotrace/) site.
-
-- Real-ESRGAN (highly recommend)
-
-  ```shell
-  cd Real-ESRGAN
-  pip install basicsr
-  # facexlib and gfpgan are for face enhancement
-  pip install facexlib
-  pip install gfpgan
-  pip install -r requirements.txt
-  python setup.py develop
-  ```
-
-  Install [torch](https://pytorch.org/) with corresponding version of your machine.
-
-  ```shell
-  # default install, please check your machine and choose right version
-  pip3 install torch
-  ```
-
-  Download model file.
-
-  ```shell
-  # Make sure under Real-ESRGAN folder
-  # RealESRGAN_x4plus_anime_6B.pth, good for anime style input
-  wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth -P weights
-  # RealESRGAN_x4plus.pth
-  wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P weights
-  ```
-
-  
-
-## Usage
-
-Input path can be a file or a folder.
-
-```text
-Usage: python get_svg.py
--f   file       required=True, type=str, Input image folder or single image path.
--c   color      type=int, default=-1, How many colors you want to draw.
--sr  do_sr      Wheather do super resolution for input image.
-```
-
-Run the script.
-
-```shell
-# Use sr to make better performance
-python get_svg.py -f test_img/test.png -sr
-
-# OR
-# Do not use sr
-python get_svg.py -f test_img/test.png
-```
-
-Output svg file is under the same path as input file, with the same name but suffix is “svg”.
+sys.path.append(os.path.join(BASE_DIR, "Real-ESRGAN"))
+try:
+    from realesrgan import RealESRGANer
+except:
+    print("[WARNING] realesrgan not import correctly!!! Make sure install it if you need to do sr!!!")
 
 
+if __name__ == '__main__':
+    # 获取参数
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--file', required=True, type=str, help="Input image folder or single image path.")
+    parser.add_argument("-c", '--color', help="How many colors you want to draw", type=int, default=-1)
+    parser.add_argument("-sr", '--do_sr', action='store_true', help="Wheather do super resolution for input image.")
+    args = parser.parse_args()
+    
+    if args.do_sr:
+        # 初始化sr模型
+        gpu_id = "0" if torch.cuda.is_available() else "cpu"
+        if os.path.basename(SR_MODEL_PATH)=="RealESRGAN_x4plus.pth":
+            scale = 4
+            srmodel = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+        elif os.path.basename(SR_MODEL_PATH)=="RealESRGAN_x2plus.pth":
+            scale = 2
+            srmodel = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
+        elif os.path.basename(SR_MODEL_PATH)=="RealESRGAN_x4plus_anime_6B.pth":
+            scale = 4
+            srmodel = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=6, num_grow_ch=32, scale=4)
+        
+        upsampler = RealESRGANer(
+            scale=scale,  # 倍数
+            model_path=SR_MODEL_PATH,
+            dni_weight=None,
+            model=srmodel,
+            tile=0,
+            tile_pad=10,
+            pre_pad=0,
+            half=True)
 
-## License
+    for_debug = False
+    if os.path.isdir(args.file):
+        img_list = glob(os.path.join(args.file, "*.jpg"))+glob(os.path.join(args.file, "*.png"))
+    else:
+        img_list = [args.file]
+    sum_time = 0
+    count = 0
+    for filename in tqdm(img_list):
+        tic = time.time()
+        print("process: ", filename)
+        # 定义路径
+        this_req_folder = os.path.join(SVG_TEMP_FOLDER, os.path.basename(filename).split(".")[0])
+        if not os.path.exists(this_req_folder):
+            os.makedirs(this_req_folder)
+        out_path = ".".join(filename.split(".")[:-1]) + ".svg"
+        
+        # sr
+        img = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+        # h,w,_= img.shape
+        if img.shape[2] == 4:  # 如果是四通道就换成白底
+            background = Image.new('RGBA', img.size, (255, 255, 255))
+            img = Image.alpha_composite(background, img)
+            img = img[...,::-1]
+        if args.do_sr:
+            img, _ = upsampler.enhance(img, outscale=scale)
+        h,w,_= img.shape
+        if for_debug:
+            print("img.shape: ", img.shape)
+        # h = h//2
+        # w = w//2
+        # img = cv2.resize(img, (w,h), interpolation=cv2.INTER_AREA)
+        if for_debug:
+            cv2.imwrite("test_sr.png", img)
+        # svg
+        draw_svg(img, w, h, this_req_folder, out_path, args.color)
+        shutil.rmtree(this_req_folder)
+        
+        sum_time += time.time()-tic
+        count += 1
 
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
-
-
-
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
-
-[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
-[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
-[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
-
-
-
-PNG2SVG © 2023 by zoezhu is licensed under CC BY-NC-SA 4.0 
-
-
-
+print("Avg process time:", sum_time/count)
